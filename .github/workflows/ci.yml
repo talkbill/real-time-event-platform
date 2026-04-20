@@ -1,0 +1,55 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.13"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install linters
+        run: pip install flake8 black mypy
+      - name: Run flake8
+        run: flake8 services/*/src/ --max-line-length=120 --ignore=E203,W503
+      - name: Run black
+        run: black --check services/*/src/
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        with:
+          scan-type: "config"
+          scan-ref: "services/"
+      - name: Run pip-audit
+        run: |
+          pip install pip-audit
+          find services -name "requirements.txt" -exec pip-audit --requirement {} \;
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Run API Gateway tests
+        run: |
+          cd services/api-gateway
+          pip install -r requirements.txt
+          pip install pytest
+          pytest tests/ -v

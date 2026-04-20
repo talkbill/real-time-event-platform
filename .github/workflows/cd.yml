@@ -1,0 +1,63 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/**'
+      - 'kubernetes/**'
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY_API: real-time-platform/api-gateway
+  ECR_REPOSITORY_WEBSOCKET: real-time-platform/websocket-server
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::ACCOUNT:role/github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push API Gateway
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          cd services/api-gateway
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_API:${{ github.sha }} .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_API:${{ github.sha }}
+          docker tag  $ECR_REGISTRY/$ECR_REPOSITORY_API:${{ github.sha }} $ECR_REGISTRY/$ECR_REPOSITORY_API:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_API:latest
+
+      - name: Build and push WebSocket Server
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          cd services/websocket-server
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_WEBSOCKET:${{ github.sha }} .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_WEBSOCKET:${{ github.sha }}
+
+      - name: Update Kubernetes manifests
+        run: |
+          cd kubernetes/overlays/dev
+          kustomize edit set image api-gateway=${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY_API:${{ github.sha }}
+
+      - name: Commit and push manifest changes
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add kubernetes/overlays/dev/kustomization.yaml
+          git commit -m "Update image tag to ${{ github.sha }}" || echo "No changes to commit"
+          git push
