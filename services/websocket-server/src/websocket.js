@@ -1,6 +1,12 @@
-// WebSocket utility helpers
-module.exports = { broadcast: (wss, data) => {
-  wss.clients.forEach(client => {
-    if (client.readyState === 1) client.send(JSON.stringify(data));
+const WebSocket = require("ws");
+
+function broadcast(wss, data) {
+  const message = JSON.stringify(data);
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
   });
-}};
+}
+
+module.exports = { broadcast };
