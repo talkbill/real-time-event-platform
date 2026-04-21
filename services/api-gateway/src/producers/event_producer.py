@@ -28,9 +28,7 @@ class EventProducer:
             self._connect()
         if not self.producer:
             raise Exception("Kafka producer not available")
-        future = self.producer.send(self.topic, value=event)
-        self.producer.flush()
-        return future
+        return self.producer.send(self.topic, value=event)
 
     def is_connected(self):
         return self.producer is not None
