@@ -1,10 +1,30 @@
 #!/bin/bash
+set -euo pipefail
+
 BASE_URL="${1:-http://localhost:5000}"
-echo "Running load test against $BASE_URL"
-for i in $(seq 1 100); do
-  curl -s -X POST "$BASE_URL/api/events" \
+TOTAL=100
+PASS=0
+FAIL=0
+
+echo "==> Running load test: $TOTAL requests against $BASE_URL"
+
+for i in $(seq 1 "$TOTAL"); do
+  PAYLOAD=$(printf '{"user_id":"user-%d","event_type":"click","payload":{"page":"home"}}' "$i")
+
+  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+    -X POST "$BASE_URL/api/events" \
     -H "Content-Type: application/json" \
-    -d "{"user_id":"user-$i","event_type":"click","payload":{"page":"home"}}" &
+    -d "$PAYLOAD") &
+
+  if [ "$HTTP_CODE" = "201" ]; then
+    PASS=$((PASS + 1))
+  else
+    FAIL=$((FAIL + 1))
+    echo "FAIL (HTTP $HTTP_CODE) on request $i"
+  fi
 done
+
 wait
-echo "Load test complete"
+
+echo ""
+echo "Load test complete: $PASS passed, $FAIL failed out of $TOTAL requests."

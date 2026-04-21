@@ -62,3 +62,11 @@ module "redis" {
   source = "./modules/redis"
   tags   = var.tags
 }
+
+module "argocd" {
+  source = "./modules/argocd"
+
+  github_org  = var.github_org
+  github_repo = var.github_repo
+  tags        = var.tags
+}
