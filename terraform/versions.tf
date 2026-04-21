@@ -14,14 +14,18 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 3.0"
     }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "~> 1.14"
+    }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.6"
     }
-    kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "~> 1.14"
-}
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.11"
+    }
   }
 
   # Uncomment for production
@@ -35,7 +39,6 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
-
   default_tags {
     tags = {
       Project     = var.project_name
@@ -67,11 +70,13 @@ provider "helm" {
   }
 }
 
-
-
 provider "kubectl" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  token                  = data.aws_eks_cluster_auth.main.token
+  host                   = try(module.eks.cluster_endpoint, "")
+  cluster_ca_certificate = try(base64decode(module.eks.cluster_certificate_authority_data), "")
   load_config_file       = false
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", try(module.eks.cluster_name, "placeholder"), "--region", var.aws_region]
+  }
 }

@@ -14,7 +14,7 @@ for i in $(seq 1 "$TOTAL"); do
   HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
     -X POST "$BASE_URL/api/events" \
     -H "Content-Type: application/json" \
-    -d "$PAYLOAD") &
+    -d "$PAYLOAD")
 
   if [ "$HTTP_CODE" = "201" ]; then
     PASS=$((PASS + 1))
@@ -23,8 +23,6 @@ for i in $(seq 1 "$TOTAL"); do
     echo "FAIL (HTTP $HTTP_CODE) on request $i"
   fi
 done
-
-wait
 
 echo ""
 echo "Load test complete: $PASS passed, $FAIL failed out of $TOTAL requests."

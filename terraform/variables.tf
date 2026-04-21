@@ -88,22 +88,10 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "redis_password" {
-  description = "Redis password"
-  type        = string
-  sensitive   = true
-}
-
 variable "kafka_version" {
   description = "Kafka version"
   type        = string
   default     = "3.7.0"
-}
-
-variable "grafana_admin_password" {
-  description = "Admin password for Grafana"
-  type        = string
-  sensitive   = true
 }
 
 variable "prometheus_stack_chart_version" {

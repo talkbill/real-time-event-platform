@@ -48,6 +48,7 @@ terraform-plan:
 	cd terraform && terraform plan
 
 # Interactive approval
+terraform-apply:
 	cd terraform && terraform apply
 
 # Auto-approve
