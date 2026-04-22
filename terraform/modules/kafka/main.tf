@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "~> 1.14"
+    }
+  }
+}
+
 resource "kubernetes_namespace_v1" "kafka" {
   metadata {
     name   = "kafka"

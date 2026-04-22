@@ -54,7 +54,7 @@ terraform-apply-auto:
 	cd terraform && terraform apply -auto-approve
 
 terraform-destroy:
-	cd terraform && terraform destroy
+	cd terraform && terraform destroy -auto-approve
 
 kubeconfig:
 	aws eks update-kubeconfig --region $(AWS_REGION) --name $(CLUSTER_NAME)

@@ -54,6 +54,7 @@ export TF_VAR_db_username="appuser"
 export TF_VAR_db_password="yourpassword"
 export TF_VAR_redis_password="yourpassword"
 export TF_VAR_grafana_admin_password="yourpassword"
+export TF_VAR_github_org="yourorg"
 
 # 2. Provision all infrastructure and deploy
 make deploy

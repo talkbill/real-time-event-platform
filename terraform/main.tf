@@ -43,15 +43,15 @@ module "kafka" {
 module "rds" {
   source = "./modules/rds"
 
-  project_name       = var.project_name
-  environment        = var.environment
-  vpc_id             = module.networking.vpc_id
-  private_subnet_ids = module.networking.private_subnet_ids
+  project_name              = var.project_name
+  environment               = var.environment
+  vpc_id                    = module.networking.vpc_id
+  private_subnet_ids        = module.networking.private_subnet_ids
   cluster_security_group_id = module.eks.cluster_security_group_id
-  node_security_group_id = module.eks.node_security_group_id
-  db_username        = var.db_username
-  db_password        = var.db_password
-  tags               = var.tags
+  node_security_group_id    = module.eks.node_security_group_id
+  db_username               = var.db_username
+  db_password               = var.db_password
+  tags                      = var.tags
 }
 
 module "monitoring" {

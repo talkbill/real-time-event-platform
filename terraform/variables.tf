@@ -19,7 +19,7 @@ variable "aws_region" {
 variable "cluster_name" {
   description = "EKS cluster name"
   type        = string
-  default     = "real-time-platform-cluster"
+  default     = "rt-platform"
 }
 
 variable "cluster_version" {
@@ -55,7 +55,7 @@ variable "public_subnet_cidrs" {
 variable "node_instance_types" {
   description = "EC2 instance types for node group"
   type        = list(string)
-  default     = ["t3.medium"]
+  default     = ["c7i-flex.large"]
 }
 
 variable "desired_node_count" {
