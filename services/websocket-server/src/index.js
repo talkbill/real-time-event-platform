@@ -21,11 +21,13 @@ wss.on("connection", (ws, req) => {
 
 async function sendCurrentCounts(target) {
   try {
-    const counts = {};
-    for (const eventType of EVENT_TYPES) {
-      const val = await redisClient.get(`event_count:${eventType}`);
-      counts[eventType] = parseInt(val || "0");
-    }
+    const entries = await Promise.all(
+      EVENT_TYPES.map(async (eventType) => {
+        const val = await redisClient.get(`event_count:${eventType}`);
+        return [eventType, parseInt(val || "0")];
+      })
+    );
+    const counts = Object.fromEntries(entries);
 
     const payload = { type: "event_counts", data: counts, timestamp: new Date().toISOString() };
 
@@ -39,10 +41,11 @@ async function sendCurrentCounts(target) {
   }
 }
 
-setInterval(() => sendCurrentCounts(null), PUSH_INTERVAL);
+const pushInterval = setInterval(() => sendCurrentCounts(null), PUSH_INTERVAL);
 
 async function shutdown(signal) {
   console.log(`${signal} received, shutting down...`);
+  clearInterval(pushInterval);
   wss.close(() => console.log("WebSocket server closed"));
   await redisClient.quit();
   process.exit(0);

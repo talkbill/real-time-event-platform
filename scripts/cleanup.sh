@@ -19,7 +19,7 @@ echo "==> Deleting ArgoCD Application (triggers managed resource cleanup)"
 kubectl delete application real-time-platform -n "$ARGOCD_NS" --ignore-not-found
 
 echo "==> Waiting for application namespace to be fully deleted"
-kubectl wait namespace/"$NAMESPACE" --for=delete --timeout=120s 2>/dev/null || true
+kubectl wait namespace/"$NAMESPACE" --for=delete --timeout=180s 2>/dev/null || true
 
 echo "==> Waiting 30s for load balancers to deprovision"
 sleep 30

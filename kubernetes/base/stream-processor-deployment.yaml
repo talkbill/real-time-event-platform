@@ -23,11 +23,20 @@ spec:
         fsGroup: 10001
       containers:
       - name: stream-processor
-        image: stream-processor:latest
-        imagePullPolicy: Always
         envFrom:
         - configMapRef:
             name: app-config
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: POSTGRES_PASSWORD
         resources:
           requests:
             cpu: "200m"

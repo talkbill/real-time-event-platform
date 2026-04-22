@@ -14,7 +14,7 @@ def _get_pool():
         _pool = pool.SimpleConnectionPool(
             minconn=1,
             maxconn=10,
-            host=os.getenv("POSTGRES_HOST"),
+            host=os.getenv("POSTGRES_HOST", "localhost"),
             database=os.getenv("POSTGRES_DB", "eventdb"),
             user=os.getenv("POSTGRES_USER"),
             password=os.getenv("POSTGRES_PASSWORD"),
@@ -34,6 +34,7 @@ def put_connection(conn):
 
 
 def init_schema():
+
     conn = get_connection()
     try:
         with conn.cursor() as cur:

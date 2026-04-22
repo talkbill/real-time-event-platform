@@ -14,7 +14,7 @@ env:
   ECR_REPO_PRODUCER:  real-time-platform/event-producer
   ECR_REPO_PROCESSOR: real-time-platform/stream-processor
 
-jobs: 
+jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -30,7 +30,7 @@ jobs:
 
       - name: Lint and format check (Python)
         run: ruff check services/api-gateway/src services/event-producer/src services/stream-processor/src
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -40,7 +40,7 @@ jobs:
         run: |
           cd services/websocket-server
           npm ci
-          npx eslint src/ --ext .js || true
+          npx eslint src/ --ext .js
 
   security-scan:
     runs-on: ubuntu-latest
@@ -98,7 +98,7 @@ jobs:
           cd services/websocket-server
           npm ci
           npm test
-  
+
   build-and-push:
     runs-on: ubuntu-latest
     needs: [lint, security-scan, test]
@@ -128,29 +128,65 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           docker build -t $REGISTRY/$ECR_REPO_API:${{ github.sha }} services/api-gateway
-          docker push    $REGISTRY/$ECR_REPO_API:${{ github.sha }}
+          docker push $REGISTRY/$ECR_REPO_API:${{ github.sha }}
+
+      - name: Scan api-gateway image
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        with:
+          scan-type: "image"
+          image-ref: "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPO_API }}:${{ github.sha }}"
+          exit-code: "1"
+          severity: "HIGH,CRITICAL"
+          trivyignores: ".trivyignore"
 
       - name: Build and push event-producer
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           docker build -t $REGISTRY/$ECR_REPO_PRODUCER:${{ github.sha }} services/event-producer
-          docker push    $REGISTRY/$ECR_REPO_PRODUCER:${{ github.sha }}
+          docker push $REGISTRY/$ECR_REPO_PRODUCER:${{ github.sha }}
+
+      - name: Scan event-producer image
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        with:
+          scan-type: "image"
+          image-ref: "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPO_PRODUCER }}:${{ github.sha }}"
+          exit-code: "1"
+          severity: "HIGH,CRITICAL"
+          trivyignores: ".trivyignore"
 
       - name: Build and push stream-processor
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           docker build -t $REGISTRY/$ECR_REPO_PROCESSOR:${{ github.sha }} services/stream-processor
-          docker push    $REGISTRY/$ECR_REPO_PROCESSOR:${{ github.sha }}
+          docker push $REGISTRY/$ECR_REPO_PROCESSOR:${{ github.sha }}
+
+      - name: Scan stream-processor image
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        with:
+          scan-type: "image"
+          image-ref: "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPO_PROCESSOR }}:${{ github.sha }}"
+          exit-code: "1"
+          severity: "HIGH,CRITICAL"
+          trivyignores: ".trivyignore"
 
       - name: Build and push websocket-server
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           docker build -t $REGISTRY/$ECR_REPO_WEBSOCKET:${{ github.sha }} services/websocket-server
-          docker push    $REGISTRY/$ECR_REPO_WEBSOCKET:${{ github.sha }}
-      
+          docker push $REGISTRY/$ECR_REPO_WEBSOCKET:${{ github.sha }}
+
+      - name: Scan websocket-server image
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        with:
+          scan-type: "image"
+          image-ref: "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPO_WEBSOCKET }}:${{ github.sha }}"
+          exit-code: "1"
+          severity: "HIGH,CRITICAL"
+          trivyignores: ".trivyignore"
+
       - name: Install kustomize
         uses: imranismail/setup-kustomize@v2
         with:
@@ -173,4 +209,4 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add kubernetes/overlays/dev/kustomization.yaml
           git commit -m "chore: update image tags to ${{ github.sha }} [skip ci]" || echo "No changes to commit"
-          git push
+          git push origin HEAD:main

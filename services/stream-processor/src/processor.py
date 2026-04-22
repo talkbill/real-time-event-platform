@@ -1,6 +1,7 @@
 import os
 import json
 import time
+from datetime import datetime
 import signal
 import logging
 import redis
@@ -77,10 +78,12 @@ class StreamProcessor:
         """Persist the event to Postgres and increment its Redis counter."""
         log.info("Processing event type=%s user=%s", event.get("event_type"), event.get("user_id"))
         self._save_to_db(event)
-        self._update_cache(event)
+        try:
+            self._update_cache(event)
+        except Exception as e:
+            log.warning("Redis cache update failed, continuing: %s", e)
 
     def _save_to_db(self, event):
-        from datetime import datetime
         conn = get_connection()
         try:
             with conn.cursor() as cur:

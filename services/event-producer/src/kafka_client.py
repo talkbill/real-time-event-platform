@@ -1,6 +1,7 @@
 import os
 import json
 import time
+from datetime import datetime
 import random
 import signal
 import logging
@@ -38,6 +39,7 @@ class KafkaClient:
                     value_serializer=lambda v: json.dumps(v).encode("utf-8"),
                     acks="all",
                     retries=3,
+                    max_in_flight_requests_per_connection=5
                     compression_type="gzip",
                 )
                 log.info("Connected to Kafka at %s", self.bootstrap_servers)
@@ -74,7 +76,6 @@ class KafkaClient:
             log.info("Producer closed cleanly")
 
     def _generate_event(self):
-        from datetime import datetime
         return {
             "user_id":    random.choice(USER_IDS),
             "event_type": random.choice(EVENT_TYPES),

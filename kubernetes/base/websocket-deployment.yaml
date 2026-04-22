@@ -17,6 +17,7 @@ spec:
         app: websocket-server
         component: websocket
     spec:
+      # node user is uid 1000 by default 
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

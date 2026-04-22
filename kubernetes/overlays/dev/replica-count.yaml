@@ -4,7 +4,7 @@ metadata:
   name: api-gateway
   namespace: real-time-platform
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: api-gateway
@@ -19,7 +19,7 @@ metadata:
   name: stream-processor
   namespace: real-time-platform
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: stream-processor
@@ -34,7 +34,7 @@ metadata:
   name: websocket-server
   namespace: real-time-platform
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: websocket-server

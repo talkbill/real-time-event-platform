@@ -52,7 +52,9 @@ metadata:
   name: allow-prometheus-scrape
   namespace: real-time-platform
 spec:
-  podSelector: {}
+  podSelector:
+    matchLabels:
+      app: api-gateway
   policyTypes:
   - Ingress
   ingress:

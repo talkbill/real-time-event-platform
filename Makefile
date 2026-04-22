@@ -30,7 +30,7 @@ help:
 	@echo ""
 	@echo "ArgoCD:"
 	@echo "  argocd-password        Print the ArgoCD admin password"
-	@echo "  argocd-ui              Port-forward ArgoCD UI to localhost:8080"
+	@echo "  argocd-ui              Port-forward ArgoCD UI to localhost:8088"
 	@echo ""
 	@echo "Local access:"
 	@echo "  port-forward           Port-forward all services for local testing"
@@ -47,11 +47,9 @@ terraform-init:
 terraform-plan:
 	cd terraform && terraform plan
 
-# Interactive approval
 terraform-apply:
 	cd terraform && terraform apply
 
-# Auto-approve
 terraform-apply-auto:
 	cd terraform && terraform apply -auto-approve
 
@@ -72,10 +70,10 @@ argocd-password:
 	  -o jsonpath="{.data.password}" | base64 -d && echo
 
 argocd-ui:
-	@echo "ArgoCD UI available at http://localhost:8080"
+	@echo "ArgoCD UI available at http://localhost:8088"
 	@echo "Username: admin"
 	@echo "Password: run 'make argocd-password'"
-	kubectl port-forward svc/argocd-server -n $(ARGOCD_NS) 8080:80
+	kubectl port-forward svc/argocd-server -n $(ARGOCD_NS) 8088:80
 
 port-forward:
 	./scripts/port-forward.sh

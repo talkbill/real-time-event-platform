@@ -1,3 +1,7 @@
+data "aws_eks_cluster_auth" "main" {
+  name = module.eks.cluster_name
+}
+
 module "networking" {
   source = "./modules/networking"
 
@@ -32,6 +36,8 @@ module "kafka" {
   cluster_name  = var.cluster_name
   kafka_version = var.kafka_version
   tags          = var.tags
+
+  depends_on = [module.eks]
 }
 
 module "rds" {
@@ -69,4 +75,6 @@ module "argocd" {
   github_org  = var.github_org
   github_repo = var.github_repo
   tags        = var.tags
+
+  depends_on = [module.eks]
 }

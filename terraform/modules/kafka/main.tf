@@ -18,13 +18,38 @@ resource "helm_release" "strimzi" {
         - kafka
     YAML
   ]
-  
+
   depends_on = [kubernetes_namespace_v1.kafka]
 }
 
 resource "time_sleep" "wait_for_strimzi_crd" {
   create_duration = "30s"
   depends_on      = [helm_release.strimzi]
+}
+
+resource "kubectl_manifest" "kafka_node_pool" {
+  yaml_body = <<-YAML
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaNodePool
+    metadata:
+      name: combined
+      namespace: kafka
+      labels:
+        strimzi.io/cluster: event-cluster
+    spec:
+      replicas: 3
+      roles:
+        - controller
+        - broker
+      storage:
+        type: ephemeral
+        # NOTE: for production, switch to:
+        # type: persistent-claim
+        # size: 10Gi
+        # deleteClaim: false
+  YAML
+
+  depends_on = [time_sleep.wait_for_strimzi_crd]
 }
 
 resource "kubectl_manifest" "kafka_cluster" {
@@ -34,10 +59,13 @@ resource "kubectl_manifest" "kafka_cluster" {
     metadata:
       name: event-cluster
       namespace: kafka
+      annotations:
+        strimzi.io/node-pools: enabled
+        strimzi.io/kraft: enabled
     spec:
       kafka:
         version: "${var.kafka_version}"
-        replicas: 3
+        metadataVersion: "3.7-IV4"
         listeners:
           - name: plain
             port: 9092
@@ -49,22 +77,12 @@ resource "kubectl_manifest" "kafka_cluster" {
           transaction.state.log.min.isr: 2
           default.replication.factor: 3
           min.insync.replicas: 2
-        # NOTE: for production, we will change to:
-        # type: persistent-claim
-        # size: 10Gi
-        # deleteClaim: false
-        storage:
-          type: ephemeral
-      zookeeper:
-        replicas: 3
-        storage:
-          type: ephemeral
       entityOperator:
         topicOperator: {}
         userOperator: {}
   YAML
 
-  depends_on = [time_sleep.wait_for_strimzi_crd]
+  depends_on = [kubectl_manifest.kafka_node_pool]
 }
 
 resource "kubectl_manifest" "kafka_topic" {

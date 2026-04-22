@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - configmap.yaml
+  - secrets.yaml
   - api-gateway-deployment.yaml
   - event-producer-deployment.yaml
   - stream-processor-deployment.yaml

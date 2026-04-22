@@ -68,3 +68,18 @@ def test_run_skips_bad_message_and_continues():
         processor.run() 
 
     mock_consumer.close.assert_called_once()
+
+def test_process_continues_if_redis_fails():
+    processor, _, mock_redis = _make_processor()
+
+    mock_redis.incr.side_effect = Exception("Redis connection lost")
+
+    event = {
+        "user_id":    "user_1",
+        "event_type": "click",
+        "payload":    {},
+        "timestamp":  "2026-01-01T00:00:00",
+    }
+
+    with patch.object(processor, "_save_to_db"):
+        processor.process(event)
