@@ -39,3 +39,8 @@ output "redis_host" {
   description = "Redis service hostname (in-cluster)"
   value       = module.redis.redis_host
 }
+
+output "ecr_repository_urls" {
+  description = "ECR repository URLs per service"
+  value       = module.ecr.repository_urls
+}

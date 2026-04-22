@@ -15,6 +15,14 @@ module "networking" {
   tags                 = var.tags
 }
 
+module "ecr" {
+  source = "./modules/ecr"
+
+  project_name = var.project_name
+  environment  = var.environment
+  tags         = var.tags
+}
+
 module "eks" {
   source = "./modules/eks"
 
@@ -72,9 +80,15 @@ module "redis" {
 module "argocd" {
   source = "./modules/argocd"
 
-  github_org  = var.github_org
-  github_repo = var.github_repo
-  tags        = var.tags
+  project_name                 = var.project_name
+  environment                  = var.environment
+  github_org                   = var.github_org
+  github_repo                  = var.github_repo
+  github_token                 = var.github_token
+  argocd_chart_version         = var.argocd_chart_version
+  argocd_admin_password_bcrypt = var.argocd_admin_password_bcrypt
+  argocd_webhook_secret        = var.argocd_webhook_secret
+  tags                         = var.tags
 
   depends_on = [module.eks]
 }

@@ -13,6 +13,7 @@ An event-driven microservices platform on AWS EKS. Events are received by an API
 | Message Broker   | Apache Kafka 3.7 (Strimzi, KRaft)  |
 | Cache            | Redis (Bitnami Helm chart)         |
 | Database         | PostgreSQL 16 (AWS RDS)            |
+| Container Registry | AWS ECR (immutable tags)         |
 | Orchestration    | AWS EKS (Kubernetes 1.32)          |
 | IaC              | Terraform >= 1.7                   |
 | GitOps           | ArgoCD + Kustomize                 |
@@ -41,32 +42,37 @@ Kafka decouples producers from consumers — the api-gateway publishes and moves
 - kubectl
 - kustomize >= 5.4
 - make
+- htpasswd (for generating the ArgoCD admin password hash)
 
 ## Quick Start
 
 ```bash
-# 1. Copy and fill in Terraform variables
+# 1. Copy and fill in non-sensitive Terraform variables
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars
-# edit terraform.tfvars — set github_org at minimum
-# sensitive variables (db_password, grafana_admin_password etc.) should be
-# exported as environment variables instead of written to the file:
+# edit terraform.tfvars — set github_org, github_repo at minimum
+
+# 2. Export sensitive variables — do not write these to terraform.tfvars
 export TF_VAR_db_username="appuser"
 export TF_VAR_db_password="yourpassword"
 export TF_VAR_redis_password="yourpassword"
 export TF_VAR_grafana_admin_password="yourpassword"
-export TF_VAR_github_org="yourorg"
+export TF_VAR_github_token="ghp_..."
+export TF_VAR_argocd_webhook_secret="yourwebhooksecret"
 
-# 2. Provision all infrastructure and deploy
+# 3. Generate and export the ArgoCD admin password bcrypt hash
+export TF_VAR_argocd_admin_password_bcrypt=$(htpasswd -nbBC 10 '' yourpassword | tr -d ':\n' | sed 's/$2y/$2a/')
+
+# 4. Provision all infrastructure and deploy
 make deploy
 
-# 3. Port-forward services for local access
+# 5. Port-forward services for local access
 make port-forward
 
-# 4. Run a load test
+# 6. Run a load test
 make load-test
 ```
 
-`make deploy` provisions VPC, EKS, RDS, Redis, Kafka, ArgoCD, and monitoring in one shot — then waits for ArgoCD to sync all application services to the cluster.
+`make deploy` provisions VPC, EKS, ECR, RDS, Redis, Kafka, ArgoCD, and monitoring in one shot — then waits for ArgoCD to sync all application services to the cluster.
 
 ## Secrets
 
@@ -79,17 +85,36 @@ kubectl create secret generic app-secrets \
   --from-literal=POSTGRES_PASSWORD=yourpassword
 ```
 
-Terraform also stores the RDS credentials in AWS Secrets Manager automatically at `real-time-platform-db-credentials-dev`. The production path is to replace the manual step above with the External Secrets Operator (ESO) syncing from Secrets Manager — see `kubernetes/base/secrets.yaml` for the placeholder and wiring.
+Terraform stores the full RDS credentials automatically in AWS Secrets Manager at `real-time-platform-db-credentials-dev`. The production path is to replace the manual step above with the External Secrets Operator (ESO) pulling from Secrets Manager — see `kubernetes/base/secrets.yaml` for the placeholder and wiring.
 
 ## After first deploy — set the RDS hostname
 
+The RDS endpoint is not known until after Terraform runs. Once it is:
+
 ```bash
-# Get the RDS endpoint from Terraform output
+# Get the endpoint
 terraform -chdir=terraform output -raw db_endpoint
 
 # Paste it into kubernetes/overlays/dev/configmap-patch.yaml
 # under POSTGRES_HOST, then commit and push — ArgoCD picks it up automatically
 ```
+
+## Infrastructure
+
+All AWS infrastructure is managed by Terraform under `terraform/`. The module layout is:
+
+| Module       | What it provisions                                         |
+|--------------|------------------------------------------------------------|
+| networking   | VPC, public/private subnets, NAT gateways, route tables    |
+| eks          | EKS cluster, managed node group, IRSA, CloudWatch logging  |
+| ecr          | ECR repositories for all four services (immutable tags)    |
+| rds          | PostgreSQL 16 on RDS, subnet group, security group         |
+| redis        | Redis via Bitnami Helm chart in the `redis` namespace      |
+| kafka        | Strimzi operator + KRaft Kafka cluster + `user-events` topic |
+| argocd       | ArgoCD, repo credentials, Application resource             |
+| monitoring   | kube-prometheus-stack + Loki via Helm                      |
+
+ECR repositories are created with `image_tag_mutability = IMMUTABLE` — the same SHA tag cannot be pushed twice, which enforces the GitOps guarantee that a tag always refers to the same image.
 
 ## CI/CD Pipeline
 
@@ -103,7 +128,7 @@ push to main
         │
         └── all pass → build-and-push
               ├── builds each image and pushes to ECR (SHA-only tag, no :latest)
-              ├── scans each image with Trivy — stops on HIGH/CRITICAL CVEs
+              ├── scans each built image with Trivy — stops on HIGH/CRITICAL CVEs
               ├── updates kubernetes/overlays/dev/kustomization.yaml with new tags
               └── commits manifest [skip ci] → ArgoCD syncs to EKS
 ```
@@ -116,7 +141,7 @@ push to main
 
 ## GitOps with ArgoCD
 
-ArgoCD watches `kubernetes/overlays/dev` on `main`. When CI commits updated image tags, ArgoCD detects the change and syncs the cluster within 3 minutes — no manual `kubectl apply` needed.
+ArgoCD watches `kubernetes/overlays/dev` on `main`. When CI commits updated image tags, ArgoCD detects the change and syncs the cluster — no manual `kubectl apply` needed. Sync retries automatically with exponential backoff if a resource isn't ready yet.
 
 ```bash
 # Get the ArgoCD admin password
@@ -125,6 +150,12 @@ make argocd-password
 # Open the ArgoCD UI at http://localhost:8088
 make argocd-ui
 ```
+
+ArgoCD is configured with:
+- `prune: true` — removes resources deleted from the repo
+- `selfHeal: true` — reverts manual cluster changes back to the repo state
+- `ServerSideApply: true` — avoids annotation size limits on large resources
+- `ApplyOutOfSyncOnly: true` — only touches resources that actually changed
 
 ## Makefile reference
 
@@ -147,7 +178,7 @@ make load-test         # fire 100 test events at the API
 
 ## Monitoring
 
-Grafana, Prometheus, and Loki are deployed in the `monitoring` namespace.
+Grafana, Prometheus, and Loki are deployed in the `monitoring` namespace by Terraform.
 
 ```bash
 kubectl port-forward svc/kube-prometheus-stack-grafana -n monitoring 3000:80
@@ -156,7 +187,7 @@ kubectl port-forward svc/kube-prometheus-stack-grafana -n monitoring 3000:80
 # password: the value you set for TF_VAR_grafana_admin_password
 ```
 
-Prometheus is configured with `serviceMonitorSelectorNilUsesHelmValues: false` so it discovers `ServiceMonitor` resources across all namespaces, including `real-time-platform`. Loki collects logs from all pods via Promtail and is available as a datasource in Grafana.
+Prometheus discovers `ServiceMonitor` resources across all namespaces including `real-time-platform`. Loki collects logs from all pods via Promtail and is pre-wired as a Grafana datasource.
 
 ## Cleanup
 
@@ -164,4 +195,4 @@ Prometheus is configured with `serviceMonitorSelectorNilUsesHelmValues: false` s
 make cleanup
 ```
 
-Deletes the ArgoCD Application (which cascades to all managed Kubernetes resources), waits for load balancers to deprovision, then runs `terraform destroy` to remove all AWS infrastructure.
+Deletes the ArgoCD Application (which cascades to all managed Kubernetes resources via the finalizer), waits for load balancers to deprovision, then runs `terraform destroy` to remove all AWS infrastructure.

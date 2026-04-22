@@ -1,10 +1,5 @@
-terraform {
-  required_providers {
-    kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "~> 1.14"
-    }
-  }
+locals {
+  repo_url = "https://github.com/${var.github_org}/${var.github_repo}"
 }
 
 resource "kubernetes_namespace_v1" "argocd" {
@@ -15,23 +10,33 @@ resource "kubernetes_namespace_v1" "argocd" {
 }
 
 resource "helm_release" "argocd" {
-  name       = "argocd"
-  repository = "https://argoproj.github.io/argo-helm"
-  chart      = "argo-cd"
-  namespace  = kubernetes_namespace_v1.argocd.metadata[0].name
-  version    = "7.4.4"
-  wait       = true
-  timeout    = 600
+  name             = "argocd"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  version          = var.argocd_chart_version
+  namespace        = kubernetes_namespace_v1.argocd.metadata[0].name
+  create_namespace = false
+  wait             = true
+  timeout          = 600
 
   values = [yamlencode({
+    configs = {
+      params = {
+        # Run without TLS — port-forward and ALB terminate externally
+        "server.insecure" = true
+      }
+      secret = {
+        argocdServerAdminPassword = var.argocd_admin_password_bcrypt
+      }
+      webhook = {
+        github = {
+          secret = var.argocd_webhook_secret
+        }
+      }
+    }
     server = {
       service = {
         type = "ClusterIP"
-      }
-    }
-    configs = {
-      params = {
-        "server.insecure" = true
       }
     }
   })]
@@ -39,33 +44,81 @@ resource "helm_release" "argocd" {
   depends_on = [kubernetes_namespace_v1.argocd]
 }
 
-# The ArgoCD Application resource tells ArgoCD what repo to watch,
-resource "kubectl_manifest" "argocd_app" {
-  yaml_body = <<-YAML
-    apiVersion: argoproj.io/v1alpha1
-    kind: Application
-    metadata:
-      name: real-time-platform
-      namespace: argocd
-      # Finalizer ensures ArgoCD deletes cluster resources when
-      finalizers:
-        - resources-finalizer.argocd.argoproj.io
-    spec:
-      project: default
-      source:
-        repoURL: https://github.com/${var.github_org}/${var.github_repo}
-        targetRevision: main
-        path: kubernetes/overlays/dev
-      destination:
-        server: https://kubernetes.default.svc
-        namespace: real-time-platform
-      syncPolicy:
-        automated:
-          prune: true 
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-  YAML
+# Repo credentials
+resource "kubernetes_secret_v1" "argocd_repo" {
+  metadata {
+    name      = "repo-${var.project_name}"
+    namespace = kubernetes_namespace_v1.argocd.metadata[0].name
+    labels = {
+      "argocd.argoproj.io/secret-type" = "repository"
+    }
+  }
+
+  data = {
+    type     = "git"
+    url      = local.repo_url
+    username = "git"
+    password = var.github_token
+  }
 
   depends_on = [helm_release.argocd]
+}
+
+# Main application
+resource "kubernetes_manifest" "argocd_app" {
+  field_manager {
+    force_conflicts = true
+  }
+
+  computed_fields = [
+    "metadata.annotations",
+    "metadata.labels",
+    "spec.syncPolicy",
+  ]
+
+  manifest = {
+    apiVersion = "argoproj.io/v1alpha1"
+    kind       = "Application"
+    metadata = {
+      name      = var.project_name
+      namespace = kubernetes_namespace_v1.argocd.metadata[0].name
+      finalizers = ["resources-finalizer.argocd.argoproj.io"]
+    }
+    spec = {
+      project = "default"
+      source = {
+        repoURL        = local.repo_url
+        targetRevision = var.target_revision
+        path           = "kubernetes/overlays/${var.environment}"
+      }
+      destination = {
+        server    = "https://kubernetes.default.svc"
+        namespace = "real-time-platform"
+      }
+      syncPolicy = {
+        automated = {
+          prune    = true
+          selfHeal = true
+        }
+        syncOptions = [
+          "CreateNamespace=true",
+          "ApplyOutOfSyncOnly=true",
+          "ServerSideApply=true",
+        ]
+        retry = {
+          limit = 5
+          backoff = {
+            duration    = "5s"
+            factor      = 2
+            maxDuration = "3m"
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [
+    helm_release.argocd,
+    kubernetes_secret_v1.argocd_repo,
+  ]
 }

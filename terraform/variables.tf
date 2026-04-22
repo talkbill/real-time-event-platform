@@ -132,3 +132,29 @@ variable "github_repo" {
   type        = string
   default     = "real-time-event-platform"
 }
+
+variable "github_token" {
+  description = "GitHub token for ArgoCD repo access"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "argocd_chart_version" {
+  description = "Helm chart version for ArgoCD"
+  type        = string
+  default     = "7.4.4"
+}
+
+variable "argocd_admin_password_bcrypt" {
+  description = "Bcrypt hash of the ArgoCD admin password"
+  type        = string
+  sensitive   = true
+}
+
+variable "argocd_webhook_secret" {
+  description = "GitHub webhook secret for ArgoCD"
+  type        = string
+  sensitive      = true
+  default     = ""
+}
