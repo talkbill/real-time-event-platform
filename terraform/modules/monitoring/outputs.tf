@@ -3,7 +3,12 @@ output "namespace" {
   value       = kubernetes_namespace_v1.monitoring.metadata[0].name
 }
 
-output "grafana_password_command" {
-  description = "Command to retrieve the Grafana admin password from the cluster"
-  value       = "kubectl get secret -n monitoring kube-prometheus-stack-grafana -o jsonpath='{.data.admin-password}' | base64 -d"
+output "grafana_service" {
+  description = "Grafana service name for port-forwarding"
+  value       = "kube-prometheus-stack-grafana"
+}
+
+output "loki_endpoint" {
+  description = "Loki push endpoint (in-cluster)"
+  value       = "http://loki.monitoring:3100/loki/api/v1/push"
 }

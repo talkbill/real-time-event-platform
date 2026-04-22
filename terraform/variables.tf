@@ -100,21 +100,6 @@ variable "prometheus_stack_chart_version" {
   default     = "70.4.2"
 }
 
-variable "loki_stack_chart_version" {
-  description = "Helm chart version for loki-stack"
-  type        = string
-  default     = "2.10.2"
-}
-
-variable "tags" {
-  description = "Common tags for all resources"
-  type        = map(string)
-  default = {
-    Environment = "dev"
-    Project     = "real-time-platform"
-  }
-}
-
 variable "grafana_admin_password" {
   description = "Grafana admin dashboard password"
   type        = string
@@ -157,4 +142,25 @@ variable "argocd_webhook_secret" {
   type        = string
   sensitive      = true
   default     = ""
+}
+
+variable "loki_chart_version" {
+  description = "Helm chart version for Loki"
+  type        = string
+  default     = "6.55.0"
+}
+
+variable "alloy_chart_version" {
+  description = "Helm chart version for Grafana Alloy"
+  type        = string
+  default     = "0.12.5"
+}
+
+variable "tags" {
+  description = "Common tags for all resources"
+  type        = map(string)
+  default = {
+    Environment = "dev"
+    Project     = "real-time-platform"
+  }
 }

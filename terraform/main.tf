@@ -67,7 +67,8 @@ module "monitoring" {
 
   grafana_admin_password         = var.grafana_admin_password
   prometheus_stack_chart_version = var.prometheus_stack_chart_version
-  loki_stack_chart_version       = var.loki_stack_chart_version
+  loki_chart_version             = var.loki_chart_version
+  alloy_chart_version            = var.alloy_chart_version
 
   depends_on = [module.eks]
 }
