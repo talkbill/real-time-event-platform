@@ -11,6 +11,7 @@ ARGOCD_NS     ?= argocd
         port-forward port-forward-grafana port-forward-argocd \
         port-forward-api port-forward-ws \
         load-test \
+		health-check \
         deploy cleanup
 
 help:
@@ -41,6 +42,7 @@ help:
 	@echo ""
 	@echo "Testing"
 	@echo "  make load-test          fire 100 test events at the API"
+	@echo "  make health-check       full health check
 	@echo ""
 	@echo "Lifecycle"
 	@echo "  make deploy             full provision + wait for ArgoCD sync"
@@ -90,13 +92,8 @@ status:
 	kubectl get pods -A
 
 health-check:
-	@echo "==> Pod status ($(NAMESPACE))..."
-	@kubectl get pods -n $(NAMESPACE)
-	@echo ""
-	@echo "==> ArgoCD application sync state..."
-	@kubectl get application -n $(ARGOCD_NS) \
-		-o custom-columns=NAME:.metadata.name,SYNC:.status.sync.status,HEALTH:.status.health.status
-	@echo ""
+	@chmod +x scripts/health-check.sh
+	@./scripts/health-check.sh
 
 get-all:
 	@echo "==> $(NAMESPACE)..."

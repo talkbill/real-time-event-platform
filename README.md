@@ -174,6 +174,7 @@ make argocd-password   # print ArgoCD admin password
 make argocd-ui         # port-forward ArgoCD to localhost:8088
 make port-forward      # port-forward all services locally
 make load-test         # fire 100 test events at the API
+make health-check      # full health check
 ```
 
 ## Monitoring
