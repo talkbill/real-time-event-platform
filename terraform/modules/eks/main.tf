@@ -16,7 +16,7 @@ module "eks" {
   ]
 
   enable_irsa                              = true
-  enable_cluster_creator_admin_permissions = true
+  enable_cluster_creator_admin_permissions = false
 
   cloudwatch_log_group_retention_in_days = 30
   cloudwatch_log_group_class             = "STANDARD"
@@ -121,7 +121,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
   namespace  = "kube-system"
-  version    = var.lbc_chart_version
+  version    = "1.8.1"
 
   values = [yamlencode({
     clusterName = module.eks.cluster_name
@@ -143,15 +143,19 @@ resource "helm_release" "aws_load_balancer_controller" {
   ]
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_eks_access_entry" "admin" {
   cluster_name  = module.eks.cluster_name
-  principal_arn = var.admin_role_arn
+  principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/michael-devops"
   type          = "STANDARD"
+
+  tags = var.tags
 }
 
 resource "aws_eks_access_policy_association" "admin" {
   cluster_name  = module.eks.cluster_name
-  principal_arn = var.admin_role_arn
+  principal_arn = aws_eks_access_entry.admin.principal_arn
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
 
   access_scope {

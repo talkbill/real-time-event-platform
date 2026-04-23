@@ -4,15 +4,15 @@ metadata:
   name: platform-ingress
   namespace: real-time-platform
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_set_header Upgrade $http_upgrade;
-      proxy_set_header Connection "upgrade";
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    # WebSocket support - tells ALB to keep connections open
+    alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=3600
+    # Group both rules onto a single ALB to avoid provisioning two
+    alb.ingress.kubernetes.io/group.name: real-time-platform
 spec:
-  ingressClassName: nginx
+  ingressClassName: alb
   rules:
   - host: api.realtime-platform.local
     http:
