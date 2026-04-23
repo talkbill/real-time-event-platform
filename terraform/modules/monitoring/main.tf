@@ -63,7 +63,7 @@ resource "helm_release" "loki" {
   namespace        = kubernetes_namespace_v1.monitoring.metadata[0].name
   create_namespace = false
   wait             = true
-  timeout          = 300
+  timeout          = 600
 
   values = [yamlencode({
   deploymentMode = "SingleBinary"

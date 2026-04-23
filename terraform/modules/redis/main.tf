@@ -12,7 +12,7 @@ resource "helm_release" "redis" {
   namespace  = kubernetes_namespace_v1.redis.metadata[0].name
   version    = "19.6.4"
   wait       = true
-  timeout    = 300
+  timeout    = 600
 
   values = [yamlencode({
     architecture = "standalone"
