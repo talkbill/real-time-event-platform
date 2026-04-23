@@ -100,6 +100,14 @@ resource "helm_release" "loki" {
   write   = { replicas = 0 }
   backend = { replicas = 0 }
 
+  chunksCache = {
+    enabled = false
+  }
+
+  resultsCache = {
+    enabled = false
+  }
+
   lokiCanary = {
     enabled = false
   }

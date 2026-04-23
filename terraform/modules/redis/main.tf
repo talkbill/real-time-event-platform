@@ -10,7 +10,7 @@ resource "helm_release" "redis" {
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "redis"
   namespace  = kubernetes_namespace_v1.redis.metadata[0].name
-  version    = "19.6.4"
+  version    = "20.6.1"
   wait       = true
   timeout    = 600
 
