@@ -147,6 +147,9 @@ port-forward-argocd:
 port-forward-grafana:
 	kubectl port-forward svc/kube-prometheus-stack-grafana -n monitoring 3000:80
 
+port-forward-prometheus:
+	kubectl port-forward svc/kube-prometheus-stack-prometheus -n monitoring 9090:9090
+
 # ── Testing ───────────────────────────────────────────────────────────────────
 
 load-test:

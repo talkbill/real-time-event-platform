@@ -46,8 +46,6 @@ resource "helm_release" "kube_prometheus_stack" {
     prometheus = {
       prometheusSpec = {
         retention = "7d"
-        # Watch ServiceMonitors across all namespaces — required to scrape
-        # real-time-platform without matching Helm's own labels
         serviceMonitorSelectorNilUsesHelmValues = false
       }
     }
@@ -57,8 +55,6 @@ resource "helm_release" "kube_prometheus_stack" {
 }
 
 # Loki in monolithic / SingleBinary mode with filesystem storage.
-# Appropriate for dev — logs are lost on pod restart.
-# Production path: switch storage.type to s3 and point at an S3 bucket.
 resource "helm_release" "loki" {
   name             = "loki"
   repository       = "https://grafana.github.io/helm-charts"
@@ -70,65 +66,61 @@ resource "helm_release" "loki" {
   timeout          = 300
 
   values = [yamlencode({
-    deploymentMode = "SingleBinary"
+  deploymentMode = "SingleBinary"
 
-    loki = {
-      commonConfig = {
-        replication_factor = 1
-      }
-      storage = {
-        type = "filesystem"
-      }
-      schemaConfig = {
-        configs = [
-          {
-            from         = "2024-04-01"
-            store        = "tsdb"
-            object_store = "filesystem"
-            schema       = "v13"
-            index = {
-              prefix = "index_"
-              period = "24h"
-            }
+  loki = {
+    commonConfig = {
+      replication_factor = 1
+    }
+    storage = {
+      type = "filesystem"
+    }
+    schemaConfig = {
+      configs = [
+        {
+          from         = "2024-04-01"
+          store        = "tsdb"
+          object_store = "filesystem"
+          schema       = "v13"
+          index = {
+            prefix = "index_"
+            period = "24h"
           }
-        ]
-      }
-      auth_enabled = false
-    }
-
-    singleBinary = {
-      replicas = 1
-    }
-
-    # Zero out all scalable-mode components so they don't conflict
-    # with SingleBinary mode
-    read = {
-      replicas = 0
-    }
-    write = {
-      replicas = 0
-    }
-    backend = {
-      replicas = 0
-    }
-
-    # Disable canary and monitoring subchart — we use kube-prometheus-stack
-    lokiCanary = {
-      enabled = false
-    }
-    monitoring = {
-      selfMonitoring = {
-        enabled = false
-        grafanaAgent = {
-          installOperator = false
         }
+      ]
+    }
+    auth_enabled = false
+  }
+
+  singleBinary = {
+    replicas = 1
+  }
+
+  read    = { replicas = 0 }
+  write   = { replicas = 0 }
+  backend = { replicas = 0 }
+
+  lokiCanary = {
+    enabled = false
+  }
+
+  test = {
+    enabled = false
+  }
+
+  monitoring = {
+    selfMonitoring = {
+      enabled = false
+      grafanaAgent = {
+        installOperator = false
       }
     }
+  }
 
-    gateway = {
-      enabled = false
-    }
-  })]
+  gateway = {
+    enabled = false
+  }
+})]
 
   depends_on = [
     kubernetes_namespace_v1.monitoring,
@@ -136,7 +128,7 @@ resource "helm_release" "loki" {
   ]
 }
 
-# Grafana Alloy — replacement for deprecated Promtail.
+# Grafana Alloy
 # Runs as a DaemonSet, collects pod logs and ships to Loki.
 resource "helm_release" "alloy" {
   name             = "alloy"
@@ -205,31 +197,4 @@ resource "helm_release" "alloy" {
   })]
 
   depends_on = [helm_release.loki]
-}
-
-# ServiceMonitor so Prometheus scrapes the api-gateway /metrics endpoint.
-# Without this Prometheus runs but never collects your application metrics.
-resource "kubectl_manifest" "api_gateway_service_monitor" {
-  yaml_body = <<-YAML
-    apiVersion: monitoring.coreos.com/v1
-    kind: ServiceMonitor
-    metadata:
-      name: api-gateway
-      namespace: monitoring
-      labels:
-        release: kube-prometheus-stack
-    spec:
-      namespaceSelector:
-        matchNames:
-          - real-time-platform
-      selector:
-        matchLabels:
-          app: api-gateway
-      endpoints:
-        - port: http
-          path: /metrics
-          interval: 30s
-  YAML
-
-  depends_on = [helm_release.kube_prometheus_stack]
 }

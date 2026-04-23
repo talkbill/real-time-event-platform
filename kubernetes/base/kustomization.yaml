@@ -14,3 +14,6 @@ resources:
   - hpa.yaml
   - pdb.yaml
   - network-policies.yaml
+  - ../monitoring/grafana-dashboard.yaml
+  - ../monitoring/prometheus-rules.yaml
+  - ../monitoring/service-monitor.yaml
