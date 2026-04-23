@@ -35,6 +35,9 @@ module "eks" {
   desired_node_count  = var.desired_node_count
   min_node_count      = var.min_node_count
   max_node_count      = var.max_node_count
+  aws_region          = var.aws_region
+  admin_role_arn      = var.admin_role_arn
+  lbc_chart_version   = var.lbc_chart_version
   tags                = var.tags
 }
 

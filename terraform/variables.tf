@@ -76,6 +76,17 @@ variable "max_node_count" {
   default     = 10
 }
 
+variable "admin_role_arn" {
+  description = "IAM role ARN granted cluster admin access"
+  type        = string
+}
+
+variable "lbc_chart_version" {
+  description = "Helm chart version for AWS Load Balancer Controller"
+  type        = string
+  default     = "1.8.1"
+}
+
 variable "db_username" {
   description = "PostgreSQL master username"
   type        = string
@@ -140,7 +151,7 @@ variable "argocd_admin_password_bcrypt" {
 variable "argocd_webhook_secret" {
   description = "GitHub webhook secret for ArgoCD"
   type        = string
-  sensitive      = true
+  sensitive   = true
   default     = ""
 }
 
