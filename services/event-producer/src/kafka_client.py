@@ -39,7 +39,7 @@ class KafkaClient:
                     value_serializer=lambda v: json.dumps(v).encode("utf-8"),
                     acks="all",
                     retries=3,
-                    max_in_flight_requests_per_connection=5
+                    max_in_flight_requests_per_connection=5,
                     compression_type="gzip",
                 )
                 log.info("Connected to Kafka at %s", self.bootstrap_servers)

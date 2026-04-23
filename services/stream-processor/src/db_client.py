@@ -1,6 +1,5 @@
 import os
 import logging
-import psycopg2
 from psycopg2 import pool
 
 log = logging.getLogger(__name__)
