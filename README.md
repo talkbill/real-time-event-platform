@@ -49,7 +49,7 @@ Kafka decouples producers from consumers — the api-gateway publishes and moves
 ```bash
 # 1. Copy and fill in non-sensitive Terraform variables
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars
-# edit terraform.tfvars — set github_org, github_repo at minimum
+# edit terraform.tfvars — set github_org, github_repo 
 
 # 2. Export sensitive variables — do not write these to terraform.tfvars
 export TF_VAR_db_username="appuser"

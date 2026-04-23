@@ -65,57 +65,39 @@ resource "kubernetes_secret_v1" "argocd_repo" {
 }
 
 # Main application
-resource "kubernetes_manifest" "argocd_app" {
-  field_manager {
-    force_conflicts = true
-  }
-
-  computed_fields = [
-    "metadata.annotations",
-    "metadata.labels",
-    "spec.syncPolicy",
-  ]
-
-  manifest = {
-    apiVersion = "argoproj.io/v1alpha1"
-    kind       = "Application"
-    metadata = {
-      name      = var.project_name
-      namespace = kubernetes_namespace_v1.argocd.metadata[0].name
-      finalizers = ["resources-finalizer.argocd.argoproj.io"]
-    }
-    spec = {
-      project = "default"
-      source = {
-        repoURL        = local.repo_url
-        targetRevision = var.target_revision
-        path           = "kubernetes/overlays/${var.environment}"
-      }
-      destination = {
-        server    = "https://kubernetes.default.svc"
-        namespace = "real-time-platform"
-      }
-      syncPolicy = {
-        automated = {
-          prune    = true
-          selfHeal = true
-        }
-        syncOptions = [
-          "CreateNamespace=true",
-          "ApplyOutOfSyncOnly=true",
-          "ServerSideApply=true",
-        ]
-        retry = {
-          limit = 5
-          backoff = {
-            duration    = "5s"
-            factor      = 2
-            maxDuration = "3m"
-          }
-        }
-      }
-    }
-  }
+resource "kubectl_manifest" "argocd_app" {
+  yaml_body = <<-YAML
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      name: ${var.project_name}
+      namespace: ${kubernetes_namespace_v1.argocd.metadata[0].name}
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: default
+      source:
+        repoURL: ${local.repo_url}
+        targetRevision: ${var.target_revision}
+        path: kubernetes/overlays/${var.environment}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: real-time-platform
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true
+          - ServerSideApply=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+  YAML
 
   depends_on = [
     helm_release.argocd,
