@@ -17,13 +17,23 @@ resource "helm_release" "redis" {
   values = [yamlencode({
     architecture = "standalone"
 
+    image = {
+      registry   = "docker.io"
+      repository = "redis"
+      tag        = "7.2-alpine"
+      pullPolicy = "IfNotPresent"
+    }
+
+    sysctlImage = {
+      enabled = false
+    }
+
     auth = {
-      enabled  = false
+      enabled = false
     }
 
     master = {
       persistence = {
-        # For production set enabled = true and provide a storageClass.
         enabled = false
       }
       resources = {

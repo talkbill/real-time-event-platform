@@ -22,6 +22,8 @@ cd "$PROJECT_ROOT/terraform"
 # does not try to delete them after the CRDs are already gone
 echo "==> Removing ArgoCD Application resources from Terraform state..."
 terraform state rm "module.argocd.kubernetes_manifest.argocd_app" 2>/dev/null || true
+terraform state rm module.argocd.kubectl_manifest.argocd_app 2>/dev/null || true
+
 
 # Let ArgoCD cascade-delete all managed resources before we pull the cluster
 echo "==> Deleting ArgoCD Application (triggers managed resource cleanup)..."
@@ -86,6 +88,7 @@ done
 # Targeted destroy ordering matters, ArgoCD and monitoring before EKS,
 # EKS before networking, so dependent resources are gone before their parents
 echo "==> Destroying Terraform infrastructure..."
+terraform state rm module.eks.helm_release.aws_load_balancer_controller
 terraform destroy \
   -target=module.monitoring \
   -target=module.argocd.helm_release.argocd \
