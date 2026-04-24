@@ -5,6 +5,7 @@ from datetime import datetime
 import random
 import signal
 import logging
+from datetime import datetime, timezone
 from kafka import KafkaProducer
 from kafka.errors import NoBrokersAvailable
 
@@ -80,7 +81,7 @@ class KafkaClient:
             "user_id":    random.choice(USER_IDS),
             "event_type": random.choice(EVENT_TYPES),
             "payload":    {"source": "event-producer"},
-            "timestamp": datetime.now(datetime.UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
     def _handle_shutdown(self, signum, frame):
