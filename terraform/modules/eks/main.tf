@@ -121,7 +121,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
   namespace  = "kube-system"
-  version    = "1.8.1"
+  version    = var.lbc_chart_version
 
   values = [yamlencode({
     clusterName = module.eks.cluster_name

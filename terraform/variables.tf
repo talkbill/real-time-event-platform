@@ -76,11 +76,6 @@ variable "max_node_count" {
   default     = 10
 }
 
-variable "admin_role_arn" {
-  description = "IAM role ARN granted cluster admin access"
-  type        = string
-}
-
 variable "lbc_chart_version" {
   description = "Helm chart version for AWS Load Balancer Controller"
   type        = string
