@@ -78,6 +78,8 @@ module "monitoring" {
 module "redis" {
   source = "./modules/redis"
   tags   = var.tags
+
+  depends_on = [module.eks]
 }
 
 module "argocd" {

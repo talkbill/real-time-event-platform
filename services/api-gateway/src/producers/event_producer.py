@@ -1,6 +1,6 @@
 import os
 import json
-from confluent_kafka import Producer, errors
+from confluent_kafka import Producer, error
 
 class EventProducer:
     def __init__(self):
@@ -19,7 +19,7 @@ class EventProducer:
                 max_in_flight_requests_per_connection=5,
                 compression_type='gzip'
             )
-        except errors.NoBrokersAvailable:
+        except error.NoBrokersAvailable:
             print("Warning: Kafka brokers not available yet")
             self.producer = None
 

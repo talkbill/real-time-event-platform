@@ -16,7 +16,7 @@ module "eks" {
   ]
 
   enable_irsa                              = true
-  enable_cluster_creator_admin_permissions = false
+  enable_cluster_creator_admin_permissions = true
 
   cloudwatch_log_group_retention_in_days = 30
   cloudwatch_log_group_class             = "STANDARD"
@@ -116,6 +116,19 @@ module "aws_load_balancer_controller_irsa_role" {
   tags = var.tags
 }
 
+resource "null_resource" "wait_for_eks" {
+  depends_on = [module.eks]
+  
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo "Waiting for EKS cluster to be ready..."
+      sleep 60
+      aws eks update-kubeconfig --region ${var.aws_region} --name ${module.eks.cluster_name}
+      kubectl get nodes
+    EOT
+  }
+}
+
 resource "helm_release" "aws_load_balancer_controller" {
   name       = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
@@ -140,6 +153,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   depends_on = [
     module.eks,
     module.aws_load_balancer_controller_irsa_role,
+    null_resource.wait_for_eks
   ]
 }
 
