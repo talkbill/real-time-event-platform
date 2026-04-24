@@ -13,7 +13,9 @@ def client():
 def test_health(client):
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.get_json()["status"] == "healthy"
+    data = response.get_json()
+    assert data["status"] == "healthy"
+    assert data["service"] == "api-gateway"
 
 
 def test_create_event(client):
@@ -31,16 +33,31 @@ def test_create_event(client):
     with patch("src.app.get_producer", return_value=mock_producer):
         response = client.post(
             "/api/events",
-            json={"user_id": "u1", "event_type": "click", "payload": {"page": "home"}}
+            json={"user_id": "u1", "event_type": "click", "payload": {"page": "home"}},
         )
 
     assert response.status_code == 201
     body = response.get_json()
-    assert body["event_id"] == "42"
-    assert body["offset"]   == 42
+    assert body["event_id"]  == "42"
+    assert body["offset"]    == 42
+    assert body["partition"] == 0
 
 
 def test_create_event_missing_fields(client):
+    """Request missing event_type should return 400."""
     response = client.post("/api/events", json={"user_id": "u1"})
     assert response.status_code == 400
     assert "Missing required fields" in response.get_json()["error"]
+
+
+def test_create_event_empty_body(client):
+    """Empty body should return 400."""
+    response = client.post("/api/events", json={})
+    assert response.status_code == 400
+
+
+def test_metrics_endpoint(client):
+    """Prometheus /metrics should return 200 with text/plain content."""
+    response = client.get("/metrics")
+    assert response.status_code == 200
+    assert b"http_requests_total" in response.data

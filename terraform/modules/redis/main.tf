@@ -15,33 +15,15 @@ resource "helm_release" "redis" {
   timeout    = 600
 
   values = [yamlencode({
-    architecture = "standalone"
-
-    image = {
-      registry   = "docker.io"
-      repository = "redis"
-      tag        = "7.2-alpine"
-      pullPolicy = "IfNotPresent"
+  architecture = "standalone"
+  auth = { enabled = false }
+  master = {
+    persistence = { enabled = false }
+    resources = {
+      requests = { cpu = "100m", memory = "128Mi" }
+      limits   = { cpu = "250m", memory = "256Mi" }
     }
-
-    sysctlImage = {
-      enabled = false
-    }
-
-    auth = {
-      enabled = false
-    }
-
-    master = {
-      persistence = {
-        enabled = false
-      }
-      resources = {
-        requests = { cpu = "100m", memory = "128Mi" }
-        limits   = { cpu = "250m", memory = "256Mi" }
-      }
-    }
-  })]
-
-  depends_on = [kubernetes_namespace_v1.redis]
+  }
+  sysctlImage = { enabled = false }
+})]
 }

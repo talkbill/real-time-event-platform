@@ -5,7 +5,7 @@ from datetime import datetime
 import random
 import signal
 import logging
-from confluent_kafka import Producer
+from kafka import KafkaProducer
 from kafka.errors import NoBrokersAvailable
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -34,7 +34,7 @@ class KafkaClient:
     def _connect_with_retry(self, max_retries=10, backoff=3):
         for attempt in range(1, max_retries + 1):
             try:
-                self.producer = Producer(
+                self.producer = KafkaProducer(
                     bootstrap_servers=self.bootstrap_servers,
                     value_serializer=lambda v: json.dumps(v).encode("utf-8"),
                     acks="all",

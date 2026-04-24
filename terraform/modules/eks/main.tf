@@ -116,17 +116,9 @@ module "aws_load_balancer_controller_irsa_role" {
   tags = var.tags
 }
 
-resource "null_resource" "wait_for_eks" {
-  depends_on = [module.eks]
-  
-  provisioner "local-exec" {
-    command = <<-EOT
-      echo "Waiting for EKS cluster to be ready..."
-      sleep 60
-      aws eks update-kubeconfig --region ${var.aws_region} --name ${module.eks.cluster_name}
-      kubectl get nodes
-    EOT
-  }
+resource "time_sleep" "wait_for_eks" {
+  create_duration = "120s"
+  depends_on      = [module.eks]
 }
 
 resource "helm_release" "aws_load_balancer_controller" {
@@ -153,7 +145,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   depends_on = [
     module.eks,
     module.aws_load_balancer_controller_irsa_role,
-    null_resource.wait_for_eks
+    time_sleep.wait_for_eks
   ]
 }
 

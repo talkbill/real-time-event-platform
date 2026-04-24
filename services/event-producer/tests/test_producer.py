@@ -5,6 +5,10 @@ from src.kafka_client import KafkaClient
 
 
 def _make_client():
+    """
+    Build a KafkaClient with the KafkaProducer patched out so no real
+    broker connection is attempted.
+    """
     mock_producer = MagicMock()
 
     mock_metadata = MagicMock()
@@ -33,12 +37,13 @@ def test_generate_event_shape():
 
 
 def test_run_sends_events():
+    """run() should call producer.send() at least once within the interval window."""
     client, mock_producer = _make_client()
-    client.interval = 0.05
+    client.interval = 0.05   
 
-    t = threading.Thread(target=client.run)
+    t = threading.Thread(target=client.run, daemon=True)
     t.start()
-    time.sleep(0.2)
+    time.sleep(0.25)          
     client._running = False
     t.join(timeout=2)
 
@@ -46,9 +51,10 @@ def test_run_sends_events():
 
 
 def test_shutdown_flushes_producer():
+    """When _running is already False, run() should flush and close cleanly."""
     client, mock_producer = _make_client()
     client.interval = 0.05
-    client._running = False
+    client._running = False   
 
     client.run()
 
