@@ -1,3 +1,4 @@
-# No fix available as of 2026-04-14 base image OS packages
-CVE-2025-69720
-CVE-2026-29111
+KSV-0118
+AWS-0040
+AWS-0041
+AWS-0104

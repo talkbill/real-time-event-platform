@@ -56,6 +56,7 @@ module "rds" {
   project_name              = var.project_name
   environment               = var.environment
   vpc_id                    = module.networking.vpc_id
+  vpc_cidr                  = var.vpc_cidr
   private_subnet_ids        = module.networking.private_subnet_ids
   cluster_security_group_id = module.eks.cluster_security_group_id
   node_security_group_id    = module.eks.node_security_group_id
