@@ -88,7 +88,7 @@ done
 # Targeted destroy ordering matters, ArgoCD and monitoring before EKS,
 # EKS before networking, so dependent resources are gone before their parents
 echo "==> Destroying Terraform infrastructure..."
-terraform state rm module.eks.helm_release.aws_load_balancer_controller
+terraform state rm module.eks.helm_release.aws_load_balancer_controller 2>/dev/null || true
 terraform destroy \
   -target=module.monitoring \
   -target=module.argocd.helm_release.argocd \

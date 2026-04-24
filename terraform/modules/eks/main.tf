@@ -143,12 +143,16 @@ resource "helm_release" "aws_load_balancer_controller" {
   ]
 }
 
-data "aws_caller_identity" "current" {}
+# These resources are disabled because enable_cluster_creator_admin_permissions = true
+# in the EKS module handles admin access automatically
+/* data "aws_caller_identity" "current" {}
 
 resource "aws_eks_access_entry" "admin" {
   cluster_name  = module.eks.cluster_name
   principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/michael-devops"
   type          = "STANDARD"
+
+  depends_on = [module.eks]
 
   tags = var.tags
 }
@@ -158,7 +162,9 @@ resource "aws_eks_access_policy_association" "admin" {
   principal_arn = aws_eks_access_entry.admin.principal_arn
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
 
+  depends_on = [aws_eks_access_entry.admin]
+  
   access_scope {
     type = "cluster"
   }
-}
+} */
