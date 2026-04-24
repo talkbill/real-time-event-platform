@@ -6,7 +6,7 @@ resources:
 
 patches:
 - path: replica-count.yaml
-# - path: configmap-patch.yaml
+  - path: configmap-patch.yaml
 
 images:
 - name: REGISTRY/api-gateway

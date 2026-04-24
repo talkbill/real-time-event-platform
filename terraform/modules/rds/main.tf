@@ -74,6 +74,7 @@ resource "aws_db_instance" "postgres" {
 
 resource "aws_secretsmanager_secret" "db_credentials" {
   name = "${var.project_name}-db-credentials-${var.environment}"
+  recovery_window_in_days = 0
   tags = var.tags
 }
 

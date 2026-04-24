@@ -48,6 +48,9 @@ spec:
         fsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
+      volumes:
+      - name: tmp
+        emptyDir: {}
       containers:
       - name: websocket-server
         image: REGISTRY/websocket-server:latest

@@ -8,9 +8,8 @@ spec:
     matchLabels: {}
   policyTypes:
     - Ingress
-    - Egress
-  ingress: []
-  egress: []
+  ingress: 
+    - {}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

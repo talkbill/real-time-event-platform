@@ -115,7 +115,6 @@ variable "grafana_admin_password" {
   description = "Grafana admin dashboard password"
   type        = string
   sensitive   = true
-  default     = "admin"
 }
 
 variable "github_org" {

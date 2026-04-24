@@ -4,4 +4,4 @@ metadata:
   name: app-config
   namespace: real-time-platform
 data:
- # POSTGRES_HOST: "real-time-platform-postgres-dev.cxxxxxxx.us-east-1.rds.amazonaws.com"
+  POSTGRES_HOST: "real-time-platform-postgres-dev.cxxxxxxx.us-east-1.rds.amazonaws.com"

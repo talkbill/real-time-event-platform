@@ -71,7 +71,7 @@ module "monitoring" {
   loki_chart_version             = var.loki_chart_version
   alloy_chart_version            = var.alloy_chart_version
 
-  depends_on = [module.eks]
+depends_on = [module.eks, module.kafka, module.redis]
 }
 
 module "redis" {

@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --user --no-cache-dir --prefix=/install -r requirements.txt
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 FROM python:3.13-slim
 
@@ -14,7 +14,7 @@ RUN groupadd -r appuser && useradd -r -g appuser -u 10001 appuser
 
 WORKDIR /app
 
-COPY --from=builder /install /usr/install
+COPY --from=builder /install /usr/local
 COPY src/ ./src/
 
 RUN chown -R appuser:appuser /app
