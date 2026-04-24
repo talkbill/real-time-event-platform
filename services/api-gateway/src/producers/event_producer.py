@@ -1,6 +1,6 @@
 import os
 import json
-from kafka import KafkaProducer, errors
+from confluent_kafka import Producer, errors
 
 class EventProducer:
     def __init__(self):
@@ -11,7 +11,7 @@ class EventProducer:
 
     def _connect(self):
         try:
-            self.producer = KafkaProducer(
+            self.producer = Producer(
                 bootstrap_servers=self.bootstrap_servers,
                 value_serializer=lambda v: json.dumps(v).encode('utf-8'),
                 acks='all',
