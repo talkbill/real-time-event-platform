@@ -14,23 +14,21 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-  - host: api.realtime-platform.local
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: api-gateway
-            port:
-              number: 5000
-  - host: ws.realtime-platform.local
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: websocket-server
-            port:
-              number: 8080
+    - http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: api-gateway
+              port:
+                number: 5000
+    - http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: websocket-server
+              port:
+                number: 8080

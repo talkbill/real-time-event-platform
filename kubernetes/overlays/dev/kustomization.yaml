@@ -6,18 +6,18 @@ resources:
 
 patches:
 - path: replica-count.yaml
-- path: configmap-patch.yaml
+# - path: configmap-patch.yaml
 
 images:
-- name: api-gateway
-  newName: placeholder
-  newTag: placeholder
-- name: event-producer
-  newName: placeholder
-  newTag: placeholder
-- name: stream-processor
-  newName: placeholder
-  newTag: placeholder
-- name: websocket-server
-  newName: placeholder
-  newTag: placeholder
+- name: REGISTRY/api-gateway
+  newName: REGISTRY/api-gateway
+  newTag: "latest"
+- name: REGISTRY/event-producer
+  newName: REGISTRY/event-producer
+  newTag: "latest"
+- name: REGISTRY/stream-processor
+  newName: REGISTRY/stream-processor
+  newTag: "latest"
+- name: REGISTRY/websocket-server
+  newName: REGISTRY/websocket-server
+  newTag: "latest"

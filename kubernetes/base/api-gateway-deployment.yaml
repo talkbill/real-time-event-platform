@@ -21,6 +21,11 @@ spec:
       labels:
         app: api-gateway
         component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5000"
+        prometheus.io/path: "/metrics"
+        prometheus.io/scheme: "http"
     spec:
       affinity:
         podAntiAffinity:
@@ -33,13 +38,21 @@ spec:
                   operator: In
                   values: [api-gateway]
               topologyKey: kubernetes.io/hostname
+
+      terminationGracePeriodSeconds: 30
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
+        runAsGroup: 10001
         fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - name: tmp
+        emptyDir: {}
       containers:
       - name: api-gateway
-        image: api-gateway:latest
+        image: REGISTRY/api-gateway:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
@@ -54,6 +67,15 @@ spec:
           limits:
             cpu: "500m"
             memory: "512Mi"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
         livenessProbe:
           httpGet:
             path: /health
@@ -68,3 +90,10 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
           failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          failureThreshold: 30
