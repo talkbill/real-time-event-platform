@@ -80,7 +80,7 @@ class KafkaClient:
             "user_id":    random.choice(USER_IDS),
             "event_type": random.choice(EVENT_TYPES),
             "payload":    {"source": "event-producer"},
-            "timestamp":  datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(datetime.UTC).isoformat(),
         }
 
     def _handle_shutdown(self, signum, frame):
