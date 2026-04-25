@@ -20,6 +20,11 @@ resource "helm_release" "strimzi" {
   chart      = "strimzi-kafka-operator"
   namespace  = kubernetes_namespace_v1.kafka.metadata[0].name
   version    = "0.43.0"
+  atomic           = true      
+  cleanup_on_fail  = true      
+  wait             = true      
+  timeout          = 120
+  replace          = true       
 
   values = [
     <<-YAML
@@ -32,7 +37,7 @@ resource "helm_release" "strimzi" {
 }
 
 resource "time_sleep" "wait_for_strimzi_crd" {
-  create_duration = "30s"
+  create_duration = "90s"
   depends_on      = [helm_release.strimzi]
 }
 

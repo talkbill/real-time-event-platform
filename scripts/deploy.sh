@@ -11,6 +11,27 @@ ARGOCD_NS="argocd"
 echo "==> Provisioning infrastructure with Terraform"
 cd "$PROJECT_ROOT/terraform"
 terraform init
+
+# Stage 1: core networking, EKS, ECR — no Helm releases
+echo "==> Stage 1: Core infrastructure"
+terraform apply -auto-approve \
+  -target=module.networking \
+  -target=module.eks \
+  -target=module.ecr
+
+# Stage 2: cluster add-ons that need a running cluster
+echo "==> Stage 2: Cluster add-ons"
+terraform apply -auto-approve \
+  -target=module.argocd \
+  -target=module.redis
+
+# Stage 3: Kafka (isolated, sequential)
+echo "==> Stage 3: Kafka"
+terraform apply -auto-approve \
+  -target=module.kafka
+
+# Stage 4: everything else
+echo "==> Stage 4: Remaining resources"
 terraform apply -auto-approve
 
 echo "==> Configuring kubectl"
