@@ -14,7 +14,7 @@ resource "kubernetes_namespace_v1" "kafka" {
   }
 }
 
-resource "helm_release" "strimzi" {
+/* resource "helm_release" "strimzi" {
   name       = "strimzi"
   repository = "https://strimzi.io/charts"
   chart      = "strimzi-kafka-operator"
@@ -39,7 +39,7 @@ resource "helm_release" "strimzi" {
 resource "time_sleep" "wait_for_strimzi_crd" {
   create_duration = "90s"
   depends_on      = [helm_release.strimzi]
-}
+} */
 
 resource "kubectl_manifest" "kafka_node_pool" {
   yaml_body = <<-YAML
@@ -63,7 +63,7 @@ resource "kubectl_manifest" "kafka_node_pool" {
         # deleteClaim: false
   YAML
 
-  depends_on = [time_sleep.wait_for_strimzi_crd]
+  depends_on = [kubernetes_namespace_v1.kafka]
 }
 
 resource "kubectl_manifest" "kafka_cluster" {
