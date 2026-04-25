@@ -29,7 +29,7 @@ kubectl wait node --all --for=condition=Ready --timeout=300s
 # Stage 3: Install Strimzi directly, bypasses Helm RBAC conflict bug
 echo "==> Installing Strimzi operator"
 kubectl create namespace kafka --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -f "https://strimzi.io/install/0.43.0/strimzi-cluster-operator-0.43.0.yaml" -n kafka
+kubectl apply -f "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.43.0/strimzi-cluster-operator-0.43.0.yaml" -n kafka
 kubectl wait deployment/strimzi-cluster-operator \
   --for=condition=available \
   --timeout=180s \
